@@ -143,7 +143,7 @@ function renderChart(data) {
 
   const width = 760;
   const height = 300;
-  const padding = { top: 20, right: 18, bottom: 30, left: 42 };
+  const padding = { top: 20, right: 18, bottom: 30, left: 46 };
   const values = data.map((item) => item.value);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
@@ -282,12 +282,12 @@ async function copyReport() {
     await navigator.clipboard.writeText(text);
     elements.copyBtn.textContent = '已复制';
     setTimeout(() => {
-      elements.copyBtn.textContent = '复制分析报告';
+      elements.copyBtn.textContent = '复制报告';
     }, 1200);
   } catch (error) {
     elements.copyBtn.textContent = '复制失败';
     setTimeout(() => {
-      elements.copyBtn.textContent = '复制分析报告';
+      elements.copyBtn.textContent = '复制报告';
     }, 1200);
   }
 }
