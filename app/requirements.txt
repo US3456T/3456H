@@ -1,2 +1,35 @@
-streamlit==1.39.0
-pandas==2.2.3
+# 3456H AI 彩票预测中心
+
+这是一个中文的 Streamlit AI 预测中心，用于：
+
+- 读取历史 CSV
+- 建立号码历史特征
+- 使用随机森林模型做启发式预测
+- 展示热号、冷号、近期走势
+- 输出推荐组合
+
+## 运行
+
+### Docker
+
+```bash
+docker compose up --build
+```
+
+浏览器打开：
+
+```text
+http://localhost:8501
+```
+
+### 本地 Python
+
+```bash
+cd app
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+## 说明
+
+此工具属于历史数据分析和启发式建模，不保证中奖。它用于学习、展示和分析，不构成投注建议。
