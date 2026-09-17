@@ -19,6 +19,10 @@ const state = {
 };
 
 const elements = {
+  healthIndex: document.getElementById('healthIndex'),
+  trendStrength: document.getElementById('trendStrength'),
+  riskIndex: document.getElementById('riskIndex'),
+  forecastStatus: document.getElementById('forecastStatus'),
   totalRows: document.getElementById('totalRows'),
   avgValue: document.getElementById('avgValue'),
   medianValue: document.getElementById('medianValue'),
@@ -103,26 +107,51 @@ function computeStats(data) {
   };
 }
 
-function generateAiReport(data, stats) {
+function computeSignals(stats) {
+  const health = Math.max(0, Math.min(100, 50 + stats.growth * 1.5 - stats.volatility * 0.8));
+  const strength = Math.max(0, Math.min(100, 35 + stats.growth * 1.8 + (stats.last - stats.first) * 0.4));
+  const risk = Math.max(0, Math.min(100, 20 + stats.volatility * 1.4 + Math.max(0, -stats.growth) * 0.6));
+
+  const forecast = stats.growth > 8 ? '看涨' : stats.growth > 0 ? '稳增' : stats.growth > -8 ? '震荡' : '偏弱';
+
+  return {
+    health: Math.round(health),
+    strength: Math.round(strength),
+    risk: Math.round(risk),
+    forecast
+  };
+}
+
+function generateAiReport(data, stats, signals) {
   const trendText = stats.last >= stats.first ? '整体呈上升趋势' : '整体呈下降趋势';
   const phase = stats.growth > 12 ? '增长较强' : stats.growth > 0 ? '稳步提升' : stats.growth > -10 ? '略有回调' : '短期波动明显';
-  const riskText = stats.volatility > 18 ? '波动偏大，建议重点关注异常点和拐点' : '波动相对稳定，趋势判断更可靠';
+  const riskText = signals.risk > 60 ? '高风险提示：波动及回撤较明显，建议谨慎观察' : '风险可控：趋势总体稳定，继续关注拐点';
 
   const keyInsights = [
     `当前筛选范围内共 ${stats.total} 条记录，平均值为 ${fmt(stats.avg)}，中位数为 ${fmt(stats.median)}。`,
     `${trendText}，从 ${fmt(stats.first)} 变化到 ${fmt(stats.last)}，累计增长约 ${fmt(stats.growth)}%。`,
-    `峰值出现在 ${stats.peakItem.date}，最高达到 ${fmt(stats.peak)}，整体结构属于 ${phase}。`,
-    `近阶段波动水平约 ${fmt(stats.volatility)}，${riskText}。`
+    `健康指数 ${signals.health}，趋势强度 ${signals.strength}，风险指数 ${signals.risk}，AI 预判为 ${signals.forecast}。`,
+    `峰值出现在 ${stats.peakItem.date}，最高达到 ${fmt(stats.peak)}，综合判断 ${phase}。`,
+    `${riskText}。`
   ];
 
   const actions = [
-    '继续观察最近 2-3 个周期的变化趋势，确认是否持续放大。',
-    '如果增长率持续高于历史均值，可重点复盘成功原因并放大资源投入。',
-    '如果波动长期偏大，建议重点关注极值、拐点和异常数据，及时修正判断。',
-    '定期更新并与历史均值、峰值做对比，利用数据趋势做更稳妥的决策。'
+    '关注最近 2-3 个周期的转折点，确认是否形成持续上升或回落结构。',
+    '若趋势强度持续增强，可继续放大追踪与观察强度；若风险指数明显升高，则应降低过度判断。',
+    '定期与历史均值、峰值和波动度对比，判断输入数据是否出现异常区间。',
+    '保留分析记录，便于后续形成更可靠的趋势判断与决策依据。'
   ];
 
   return { keyInsights, actions };
+}
+
+function renderSignalMetrics(stats) {
+  const signals = computeSignals(stats);
+  elements.healthIndex.textContent = `${signals.health}`;
+  elements.trendStrength.textContent = `${signals.strength}`;
+  elements.riskIndex.textContent = `${signals.risk}`;
+  elements.forecastStatus.textContent = signals.forecast;
+  return signals;
 }
 
 function renderMetrics(stats) {
@@ -210,8 +239,8 @@ function renderTable(data) {
   });
 }
 
-function renderAi(data, stats) {
-  const report = generateAiReport(data, stats);
+function renderAi(data, stats, signals) {
+  const report = generateAiReport(data, stats, signals);
   const insightHtml = report.keyInsights.map((entry) => `<li>${entry}</li>`).join('');
   const actionHtml = report.actions.map((entry) => `<li>${entry}</li>`).join('');
 
@@ -237,10 +266,11 @@ function refreshView() {
   });
 
   const stats = computeStats(sorted);
+  const signals = renderSignalMetrics(stats);
   renderMetrics(stats);
   renderChart(sorted);
   renderTable(sorted);
-  renderAi(sorted, stats);
+  renderAi(sorted, stats, signals);
 }
 
 function loadDemoData() {
@@ -261,7 +291,7 @@ function handleFileUpload(event) {
     const content = String(reader.result || '');
     const parsed = parseCSV(content);
     if (!parsed.length) {
-      elements.aiReport.innerHTML = '<p>CSV 解析失败。请检查列名是否包含日期和数值字段，例如：date,value。</p>';
+      elements.aiReport.innerHTML = '<p>CSV 解析失败。请检查列名是否包含日期和数值字段，例如：date,value���</p>';
       return;
     }
     state.data = parsed;

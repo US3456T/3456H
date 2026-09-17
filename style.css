@@ -3,9 +3,9 @@
 }
 
 :root {
-  --bg-1: #071521;
-  --bg-2: #0d1d2a;
-  --bg-3: #0a1320;
+  --bg-1: #061521;
+  --bg-2: #0b1d2a;
+  --bg-3: #0d1421;
   --panel: rgba(15, 24, 38, 0.9);
   --panel-strong: rgba(8, 14, 23, 0.96);
   --line: rgba(142, 182, 255, 0.2);
@@ -32,7 +32,7 @@ html, body {
 }
 
 body {
-  padding: 28px 18px 48px;
+  padding: 28px 18px 52px;
 }
 
 button, input {
@@ -145,6 +145,7 @@ h2, h3, h4, p {
 .hero-panel,
 .panel,
 .stat-card,
+.signal-card,
 .control-strip {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -212,6 +213,39 @@ h2, h3, h4, p {
   background: linear-gradient(135deg, var(--blue), #afd7ff);
   color: #061521;
   border-color: transparent;
+}
+
+.signal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.signal-card {
+  padding: 18px 18px 16px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.signal-card.blue { border-top: 3px solid var(--blue); }
+.signal-card.green { border-top: 3px solid var(--green); }
+.signal-card.orange { border-top: 3px solid var(--orange); }
+.signal-card.purple { border-top: 3px solid var(--purple); }
+
+.signal-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signal-value {
+  margin-top: 10px;
+  font-size: clamp(1.6rem, 2vw, 2.3rem);
+  font-weight: 800;
 }
 
 .stats-grid {
@@ -356,8 +390,9 @@ th {
 }
 
 @media (max-width: 980px) {
+  .signal-grid,
   .stats-grid {
-    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
   }
 
   .main-grid {
@@ -377,16 +412,7 @@ th {
     justify-content: flex-start;
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-  }
-}
-
-@media (max-width: 500px) {
-  body {
-    padding: 18px 12px 32px;
-  }
-
+  .signal-grid,
   .stats-grid {
     grid-template-columns: 1fr;
   }

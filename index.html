@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI 智能数据大屏分析</title>
-    <meta name="description" content="全免费、低配置、网页直接使用的 AI 智能数据大屏分析工具，支持 CSV 上传和趋势统计。" />
+    <title>AI 智能数据中台</title>
+    <meta
+      name="description"
+      content="免费开源的 AI 智能数据中台，纯前端网页工具，支持 CSV 上传、趋势分析、峰值识别、AI 风格建议与大屏展示。"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -13,8 +16,8 @@
         <div class="brand-block">
           <div class="brand-icon">AI</div>
           <div>
-            <div class="eyebrow">FREE · LIGHT · WEB</div>
-            <h1>智能数据分析大屏</h1>
+            <div class="eyebrow">OPEN SOURCE · FREE · WEB</div>
+            <h1>智能数据中台</h1>
           </div>
         </div>
 
@@ -30,15 +33,15 @@
 
       <section class="hero-panel">
         <div>
-          <div class="small-tag">智能分析中心</div>
-          <h2>历史走势 · 趋势跟踪 · 关键洞察 · 智能建议</h2>
+          <div class="small-tag">商业中台版</div>
+          <h2>历史走势 · AI 智能统计 · 预判分析 · 趋势跟踪 · 风险识别</h2>
         </div>
 
         <div class="legend-group">
-          <span>免费版</span>
+          <span>开源免费</span>
           <span>低配置</span>
           <span>网页使用</span>
-          <span>无安装</span>
+          <span>无需安装</span>
         </div>
       </section>
 
@@ -46,6 +49,25 @@
         <button class="range-btn active" data-range="all">全部</button>
         <button class="range-btn" data-range="6">近 6 期</button>
         <button class="range-btn" data-range="3">近 3 期</button>
+      </section>
+
+      <section class="signal-grid">
+        <article class="signal-card blue">
+          <div class="signal-label">健康指数</div>
+          <div id="healthIndex" class="signal-value">0</div>
+        </article>
+        <article class="signal-card green">
+          <div class="signal-label">趋势强度</div>
+          <div id="trendStrength" class="signal-value">0</div>
+        </article>
+        <article class="signal-card orange">
+          <div class="signal-label">风险指数</div>
+          <div id="riskIndex" class="signal-value">0</div>
+        </article>
+        <article class="signal-card purple">
+          <div class="signal-label">AI 预判</div>
+          <div id="forecastStatus" class="signal-value">--</div>
+        </article>
       </section>
 
       <section class="stats-grid">
