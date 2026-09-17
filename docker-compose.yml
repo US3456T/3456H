@@ -1,7 +1,7 @@
 services:
-  lottery-dashboard:
+  enterprise-dashboard:
     build: ./app
-    container_name: lottery-dashboard
+    container_name: enterprise-dashboard
     ports:
       - "8501:8501"
     restart: unless-stopped
