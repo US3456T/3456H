@@ -4,9 +4,9 @@
 
 :root {
   --bg-1: #071421;
-  --bg-2: #0d1b2a;
+  --bg-2: #0d1d2d;
   --panel: rgba(13, 22, 35, 0.9);
-  --panel-strong: rgba(8, 14, 23, 0.95);
+  --panel-strong: rgba(8, 14, 23, 0.96);
   --line: rgba(142, 182, 255, 0.2);
   --text: #eef8ff;
   --muted: #a9c0d9;
@@ -32,6 +32,10 @@ html, body {
 
 body {
   padding: 30px 16px 56px;
+}
+
+button, input {
+  font: inherit;
 }
 
 .app-shell {
@@ -153,7 +157,7 @@ h2, h3, h4, p {
   justify-content: space-between;
   gap: 18px;
   padding: 22px 24px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .section-tag {
@@ -183,6 +187,29 @@ h2, h3, h4, p {
   background: rgba(127, 200, 255, 0.06);
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.range-btn {
+  border: 1px solid rgba(127, 200, 255, 0.2);
+  background: rgba(127, 200, 255, 0.04);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.range-btn.active {
+  background: linear-gradient(135deg, var(--blue), #a9d9ff);
+  color: #081421;
+  border-color: transparent;
 }
 
 .stats-grid {

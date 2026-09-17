@@ -13,6 +13,11 @@ const DEFAULT_DATA = [
   { date: '2024-12', value: 228 }
 ];
 
+const state = {
+  data: DEFAULT_DATA,
+  range: 'all'
+};
+
 const elements = {
   totalRows: document.getElementById('totalRows'),
   avgValue: document.getElementById('avgValue'),
@@ -24,7 +29,8 @@ const elements = {
   dataTableBody: document.getElementById('dataTableBody'),
   demoBtn: document.getElementById('demoBtn'),
   fileInput: document.getElementById('fileInput'),
-  copyBtn: document.getElementById('copyBtn')
+  copyBtn: document.getElementById('copyBtn'),
+  rangeButtons: Array.from(document.querySelectorAll('.range-btn'))
 };
 
 function fmt(value, digits = 1) {
@@ -65,6 +71,12 @@ function parseCSV(text) {
   return records;
 }
 
+function getVisibleData() {
+  const data = [...state.data];
+  if (state.range === 'all') return data;
+  return data.slice(-Number(state.range));
+}
+
 function computeStats(data) {
   const values = data.map((item) => item.value);
   const total = data.length;
@@ -97,7 +109,7 @@ function generateAiReport(data, stats) {
   const riskText = stats.volatility > 18 ? '波动偏大，建议重点关注异常点和拐点' : '波动相对稳定，趋势判断更可靠';
 
   const keyInsights = [
-    `当前数据共 ${stats.total} 条记录，平均值为 ${fmt(stats.avg)}，中位数为 ${fmt(stats.median)}。`,
+    `当前筛选范围内共 ${stats.total} 条记录，平均值为 ${fmt(stats.avg)}，中位数为 ${fmt(stats.median)}。`,
     `${trendText}，从 ${fmt(stats.first)} 变化到 ${fmt(stats.last)}，累计增长约 ${fmt(stats.growth)}%。`,
     `峰值出现在 ${stats.peakItem.date}，最高达到 ${fmt(stats.peak)}，整体结构属于 ${phase}。`,
     `近阶段波动水平约 ${fmt(stats.volatility)}，${riskText}。`
@@ -107,7 +119,7 @@ function generateAiReport(data, stats) {
     '继续观察最近 2-3 个周期的变化趋势，确认是否持续放大。',
     '如果增长率持续高于历史均值，可重点复盘成功原因并放大资源投入。',
     '如果波动长期偏大，建议重点关注极值、拐点和异常数据，及时修正判断。',
-    '定期更新并和历史均值、峰值做对比，利用数据趋势做更稳妥的决策。'
+    '定期更新并与历史均值、峰值做对比，利用数据趋势做更稳妥的决策。'
   ];
 
   return { keyInsights, actions };
@@ -211,7 +223,8 @@ function renderAi(data, stats) {
   `;
 }
 
-function applyDataset(data) {
+function refreshView() {
+  const data = getVisibleData();
   if (!data.length) {
     elements.aiReport.innerHTML = '<p>未识别到有效数据，请上传包含日期和数值列的 CSV。</p>';
     return;
@@ -231,7 +244,12 @@ function applyDataset(data) {
 }
 
 function loadDemoData() {
-  applyDataset(DEFAULT_DATA);
+  state.data = DEFAULT_DATA;
+  state.range = 'all';
+  elements.rangeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.range === state.range);
+  });
+  refreshView();
 }
 
 function handleFileUpload(event) {
@@ -246,7 +264,12 @@ function handleFileUpload(event) {
       elements.aiReport.innerHTML = '<p>CSV 解析失败。请检查列名是否包含日期和数值字段，例如：date,value。</p>';
       return;
     }
-    applyDataset(parsed);
+    state.data = parsed;
+    state.range = 'all';
+    elements.rangeButtons.forEach((button) => {
+      button.classList.toggle('active', button.dataset.range === state.range);
+    });
+    refreshView();
   };
   reader.readAsText(file);
 }
@@ -269,8 +292,20 @@ async function copyReport() {
   }
 }
 
+function bindRangeButtons() {
+  elements.rangeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      state.range = button.dataset.range;
+      elements.rangeButtons.forEach((item) => {
+        item.classList.toggle('active', item === button);
+      });
+      refreshView();
+    });
+  });
+}
+
 elements.demoBtn.addEventListener('click', loadDemoData);
 elements.fileInput.addEventListener('change', handleFileUpload);
 elements.copyBtn.addEventListener('click', copyReport);
-
+bindRangeButtons();
 loadDemoData();
