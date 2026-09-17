@@ -4,71 +4,85 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI 智能数据分析看板</title>
+    <meta name="description" content="免费、低配置、网页版 AI 智能数据趋势分析工具，支持 CSV 上传与自动分析。" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="page-shell">
+    <div class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">低配置 / 免费 / 网页版</p>
+          <p class="eyebrow">FREE · LOW-COST · WEB</p>
           <h1>AI 智能数据分析看板</h1>
         </div>
-        <div class="header-actions">
-          <button id="demoBtn" class="secondary-btn">加载示例数据</button>
-          <label class="primary-btn file-label">
+
+        <div class="topbar-actions">
+          <button id="demoBtn" class="btn btn-secondary">加载示例数据</button>
+          <label class="btn btn-primary file-picker">
             <input id="fileInput" type="file" accept=".csv,text/csv" />
             上传 CSV
           </label>
+          <button id="copyBtn" class="btn btn-ghost">复制分析报告</button>
         </div>
       </header>
 
       <main class="dashboard">
-        <section class="hero-card">
+        <section class="hero-panel">
           <div>
-            <p class="section-label">一键分析</p>
-            <h2>历史走势 + AI 智能解读</h2>
+            <p class="section-tag">智能分析引擎</p>
+            <h2>历史走势 · 趋势跟踪 · 关键洞察 · 智能建议</h2>
           </div>
-          <div class="hero-stats">
-            <span>可离线运行</span>
-            <span>无需安装</span>
-            <span>批量数据</span>
+          <div class="hero-badges">
+            <span>离线可用</span>
+            <span>无安装</span>
+            <span>低配置友好</span>
+            <span>免费版</span>
           </div>
         </section>
 
-        <section class="summary-grid">
-          <article class="summary-card accent-blue">
-            <div class="card-title">总记录数</div>
-            <div id="totalRows" class="big-number">0</div>
+        <section class="stats-grid">
+          <article class="stat-card blue">
+            <div class="stat-label">总记录数</div>
+            <div id="totalRows" class="stat-value">0</div>
           </article>
-          <article class="summary-card accent-green">
-            <div class="card-title">平均值</div>
-            <div id="avgValue" class="big-number">0</div>
+          <article class="stat-card green">
+            <div class="stat-label">平均值</div>
+            <div id="avgValue" class="stat-value">0</div>
           </article>
-          <article class="summary-card accent-orange">
-            <div class="card-title">环比变化</div>
-            <div id="growthRate" class="big-number">0%</div>
+          <article class="stat-card orange">
+            <div class="stat-label">中位数</div>
+            <div id="medianValue" class="stat-value">0</div>
           </article>
-          <article class="summary-card accent-pink">
-            <div class="card-title">峰值</div>
-            <div id="peakValue" class="big-number">0</div>
+          <article class="stat-card purple">
+            <div class="stat-label">增长率</div>
+            <div id="growthRate" class="stat-value">0%</div>
+          </article>
+          <article class="stat-card pink">
+            <div class="stat-label">峰值</div>
+            <div id="peakValue" class="stat-value">0</div>
+          </article>
+          <article class="stat-card cyan">
+            <div class="stat-label">波动度</div>
+            <div id="volatility" class="stat-value">0</div>
           </article>
         </section>
 
-        <section class="content-grid">
-          <div class="panel chart-panel">
+        <section class="main-grid">
+          <div class="panel">
             <div class="panel-header">
               <h3>趋势走势图</h3>
             </div>
-            <div id="chartWrap" class="chart-wrap">
-              <svg id="trendChart" viewBox="0 0 720 260" preserveAspectRatio="none"></svg>
+            <div class="chart-box">
+              <svg id="trendChart" viewBox="0 0 760 300" preserveAspectRatio="none"></svg>
             </div>
           </div>
 
-          <div class="panel insight-panel">
+          <div class="panel">
             <div class="panel-header">
               <h3>AI 智能分析</h3>
             </div>
-            <div id="aiReport" class="ai-report"></div>
+            <div id="aiReport" class="ai-report">
+              <p>请上传 CSV 或点击“加载示例数据”。</p>
+            </div>
           </div>
         </section>
 
