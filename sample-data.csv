@@ -1,0 +1,223 @@
+const DEFAULT_DATA = [
+  { date: '2024-01', value: 120 },
+  { date: '2024-02', value: 128 },
+  { date: '2024-03', value: 132 },
+  { date: '2024-04', value: 146 },
+  { date: '2024-05', value: 152 },
+  { date: '2024-06', value: 161 },
+  { date: '2024-07', value: 175 },
+  { date: '2024-08', value: 168 },
+  { date: '2024-09', value: 188 },
+  { date: '2024-10', value: 194 },
+  { date: '2024-11', value: 205 },
+  { date: '2024-12', value: 218 }
+];
+
+const elements = {
+  totalRows: document.getElementById('totalRows'),
+  avgValue: document.getElementById('avgValue'),
+  growthRate: document.getElementById('growthRate'),
+  peakValue: document.getElementById('peakValue'),
+  chartWrap: document.getElementById('trendChart'),
+  aiReport: document.getElementById('aiReport'),
+  dataTableBody: document.getElementById('dataTableBody'),
+  demoBtn: document.getElementById('demoBtn'),
+  fileInput: document.getElementById('fileInput')
+};
+
+function parseCSV(text) {
+  const rows = text.trim().split(/\r?\n/).filter(Boolean);
+  if (!rows.length) return [];
+
+  const headers = rows[0].split(',').map((item) => item.trim().toLowerCase());
+  const valueIndex = headers.findIndex((item) => ['value', 'num', 'count', 'amount', 'data'].includes(item));
+  const dateIndex = headers.findIndex((item) => ['date', 'time', 'month', 'day'].includes(item));
+
+  const data = rows.slice(1).map((row) => {
+    const cells = row.split(',').map((cell) => cell.trim());
+    const date = cells[dateIndex] || '未知日期';
+    const value = Number(cells[valueIndex] || 0);
+    return { date, value: Number.isFinite(value) ? value : 0 };
+  }).filter((item) => item.date && Number.isFinite(item.value));
+
+  return data;
+}
+
+function createReport(data) {
+  const total = data.length;
+  const avg = data.reduce((sum, item) => sum + item.value, 0) / (total || 1);
+  const first = data[0]?.value ?? 0;
+  const last = data[data.length - 1]?.value ?? 0;
+  const growth = first === 0 ? 0 : ((last - first) / first) * 100;
+  const peak = Math.max(...data.map((item) => item.value), 0);
+  const trend = last >= first ? '整体呈上升趋势' : '整体呈下降趋势';
+  const volatility = data.slice(1).reduce((acc, item, index) => {
+    const prev = data[index].value;
+    return acc + Math.abs(item.value - prev);
+  }, 0) / Math.max(data.length - 1, 1);
+
+  const keyInsights = [
+    `本周期共有 ${total} 条记录，平均值为 ${avg.toFixed(1)}。`,
+    `${trend}，从 ${first.toFixed(1)} 上升至 ${last.toFixed(1)}，增幅约 ${growth.toFixed(1)}%。`,
+    `峰值出现在 ${data.reduce((maxItem, item) => item.value > maxItem.value ? item : maxItem, data[0] || { date: 'N/A', value: 0 }).date}，达到 ${peak.toFixed(1)}。`,
+    `日均波动约 ${volatility.toFixed(1)}，说明数据波动${volatility > 10 ? '较大，建议观察异常波段' : '较稳定，趋势较清晰'}。`
+  ];
+
+  const recommendations = [
+    '重点关注最近几期的上升与下降拐点，判断是否形成新的趋势。',
+    '如果数据呈持续增长，可考虑扩大投入或优化资源配置；若波动增大，应及时排查异常因素。',
+    '定期更新数据并与历史均值进行对比，能更快发现潜在机会与风险。'
+  ];
+
+  return { keyInsights, recommendations, growth, avg, peak, trend };
+}
+
+function renderTable(data) {
+  elements.dataTableBody.innerHTML = '';
+
+  data.forEach((item, index) => {
+    const prev = data[index - 1]?.value ?? item.value;
+    const delta = item.value - prev;
+    const deltaText = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
+    const status = delta > 0 ? '上涨' : delta < 0 ? '下跌' : '持平';
+    const statusClass = delta > 0 ? 'status-up' : delta < 0 ? 'status-down' : 'status-flat';
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.date}</td>
+      <td>${item.value.toFixed(1)}</td>
+      <td>${deltaText}</td>
+      <td><span class="badge ${statusClass}">${status}</span></td>
+    `;
+    elements.dataTableBody.appendChild(row);
+  });
+}
+
+function drawChart(data) {
+  const svg = document.getElementById('trendChart');
+  const width = 720;
+  const height = 260;
+  const padding = { top: 20, right: 22, bottom: 30, left: 44 };
+
+  if (!data.length) {
+    svg.innerHTML = '';
+    return;
+  }
+
+  const minValue = Math.min(...data.map((item) => item.value));
+  const maxValue = Math.max(...data.map((item) => item.value));
+  const xStep = (width - padding.left - padding.right) / Math.max(data.length - 1, 1);
+  const yRange = maxValue - minValue || 1;
+
+  const points = data.map((item, index) => {
+    const x = padding.left + index * xStep;
+    const y = height - padding.bottom - ((item.value - minValue) / yRange) * (height - padding.top - padding.bottom);
+    return { x, y, value: item.value, date: item.date };
+  });
+
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - padding.bottom} L ${points[0].x} ${height - padding.bottom} Z`;
+
+  const grid = Array.from({ length: 5 }, (_, i) => {
+    const y = padding.top + ((height - padding.top - padding.bottom) / 4) * i;
+    return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="rgba(126,174,255,0.18)" stroke-width="1" />`;
+  }).join('');
+
+  const labels = points
+    .filter((_, index) => index % Math.ceil(points.length / 5) === 0 || index === points.length - 1)
+    .map((point) => `<text x="${point.x}" y="${height - 8}" text-anchor="middle" fill="#9bb9d9" font-size="11">${point.date}</text>`)
+    .join('');
+
+  const circles = points.map((point) => `
+    <circle cx="${point.x}" cy="${point.y}" r="4.5" fill="#7cc8ff" stroke="#081223" stroke-width="2" />
+    <title>${point.date}: ${point.value}</title>
+  `).join('');
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="rgba(124,200,255,0.55)" />
+        <stop offset="100%" stop-color="rgba(124,200,255,0.04)" />
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${areaPath}" fill="url(#areaGradient)" opacity="0.9"></path>
+    <path d="${linePath}" fill="none" stroke="#7cc8ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+    ${circles}
+    ${labels}
+  `;
+}
+
+function renderMetrics(data) {
+  const total = data.length;
+  const avg = data.reduce((sum, item) => sum + item.value, 0) / (total || 1);
+  const first = data[0]?.value ?? 0;
+  const last = data[total - 1]?.value ?? 0;
+  const growth = first === 0 ? 0 : ((last - first) / first) * 100;
+  const peak = Math.max(...data.map((item) => item.value), 0);
+
+  elements.totalRows.textContent = String(total);
+  elements.avgValue.textContent = avg.toFixed(1);
+  elements.growthRate.textContent = `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`;
+  elements.peakValue.textContent = peak.toFixed(1);
+}
+
+function renderAI(data) {
+  const analysis = createReport(data);
+  const summaryList = analysis.keyInsights.map((entry) => `<li>${entry}</li>`).join('');
+  const recList = analysis.recommendations.map((entry) => `<li>${entry}</li>`).join('');
+
+  elements.aiReport.innerHTML = `
+    <h4>核心结论</h4>
+    <ul>${summaryList}</ul>
+    <h4 style="margin-top: 18px;">建议动作</h4>
+    <ul>${recList}</ul>
+  `;
+}
+
+function renderDataset(data) {
+  if (!data.length) {
+    elements.aiReport.innerHTML = '<p>没有可分析的数据，请上传 CSV 或点击“加载示例数据”。</p>';
+    return;
+  }
+
+  renderMetrics(data);
+  renderTable(data);
+  drawChart(data);
+  renderAI(data);
+}
+
+function setData(data) {
+  const sorted = [...data].sort((a, b) => {
+    if (a.date < b.date) return -1;
+    if (a.date > b.date) return 1;
+    return 0;
+  });
+  renderDataset(sorted);
+}
+
+function loadDemoData() {
+  setData(DEFAULT_DATA);
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const csvText = String(reader.result || '');
+    const parsed = parseCSV(csvText);
+    if (!parsed.length) {
+      elements.aiReport.innerHTML = '<p>未识别到有效数据，请确保 CSV 包含日期和数值列。</p>';
+      return;
+    }
+    setData(parsed);
+  };
+  reader.readAsText(file);
+}
+
+elements.demoBtn.addEventListener('click', loadDemoData);
+elements.fileInput.addEventListener('change', handleFileUpload);
+
+loadDemoData();

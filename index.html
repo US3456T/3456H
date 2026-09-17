@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 智能数据分析看板</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">低配置 / 免费 / 网页版</p>
+          <h1>AI 智能数据分析看板</h1>
+        </div>
+        <div class="header-actions">
+          <button id="demoBtn" class="secondary-btn">加载示例数据</button>
+          <label class="primary-btn file-label">
+            <input id="fileInput" type="file" accept=".csv,text/csv" />
+            上传 CSV
+          </label>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="hero-card">
+          <div>
+            <p class="section-label">一键分析</p>
+            <h2>历史走势 + AI 智能解读</h2>
+          </div>
+          <div class="hero-stats">
+            <span>可离线运行</span>
+            <span>无需安装</span>
+            <span>批量数据</span>
+          </div>
+        </section>
+
+        <section class="summary-grid">
+          <article class="summary-card accent-blue">
+            <div class="card-title">总记录数</div>
+            <div id="totalRows" class="big-number">0</div>
+          </article>
+          <article class="summary-card accent-green">
+            <div class="card-title">平均值</div>
+            <div id="avgValue" class="big-number">0</div>
+          </article>
+          <article class="summary-card accent-orange">
+            <div class="card-title">环比变化</div>
+            <div id="growthRate" class="big-number">0%</div>
+          </article>
+          <article class="summary-card accent-pink">
+            <div class="card-title">峰值</div>
+            <div id="peakValue" class="big-number">0</div>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <div class="panel chart-panel">
+            <div class="panel-header">
+              <h3>趋势走势图</h3>
+            </div>
+            <div id="chartWrap" class="chart-wrap">
+              <svg id="trendChart" viewBox="0 0 720 260" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+
+          <div class="panel insight-panel">
+            <div class="panel-header">
+              <h3>AI 智能分析</h3>
+            </div>
+            <div id="aiReport" class="ai-report"></div>
+          </div>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-header">
+            <h3>数据明细</h3>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>数值</th>
+                  <th>增幅</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
