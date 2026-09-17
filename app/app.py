@@ -1,174 +1,160 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
 import random
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-import streamlit as st
-
-st.set_page_config(page_title="AI 彩票分析大盘", page_icon="📊", layout="wide")
+st.set_page_config(page_title="AI 彩票大屏分析", page_icon="📊", layout="wide")
 
 DATA_FILE = Path(__file__).resolve().parent / "data" / "demo.csv"
 
-st.title("📊 AI 彩票分析大盘")
-st.caption("基于历史数据的智能统计、热号分析、冷号分析、走势观察和随机组合生成。")
-st.warning("仅用于学习和数据分析，不能保证中奖，彩票开奖结果仍然是随机事件。")
-
+st.title("📊 AI 彩票大屏分析")
+st.caption("大屏版：历史统计 + 热冷分析 + 近期走势 + AI 风格提示 + 随机组合")
+st.warning("仅用于历史数据分析与学习展示，不能保证中奖。")
 
 @st.cache_data
 def load_demo_data():
     return pd.read_csv(DATA_FILE)
 
 
-def detect_number_columns(df: pd.DataFrame):
-    preferred = []
-    for col in df.columns:
-        c = str(col).lower()
-        if "date" in c:
+def detect_number_columns(df):
+    cols = []
+    for c in df.columns:
+        cc = str(c).lower()
+        if "date" in cc:
             continue
-        if any(token in c for token in ["ball", "num", "number", "n1", "n2", "n3", "n4", "n5", "n6", "red", "blue"]):
-            preferred.append(col)
-    if preferred:
-        return preferred
-    return [c for c in df.columns if c.lower() != "date"]
+        if any(token in cc for token in ["ball", "num", "number", "n1", "n2", "n3", "n4", "n5", "n6", "red", "blue"]):
+            cols.append(c)
+    if cols:
+        return cols
+    return [c for c in df.columns if str(c).lower() != "date"]
 
 
-def normalize_draws(df: pd.DataFrame):
+def normalize(df):
     columns = detect_number_columns(df)
     if not columns:
-        raise ValueError("CSV 中没有找到可用的号码列。请至少提供像 n1,n2,n3,n4,n5,n6 或 ball1,ball2,... 这样的列。")
-
+        raise ValueError("CSV 里没有找到可用号码列。")
     frames = []
     for col in columns:
-        s = pd.to_numeric(df[col], errors="coerce")
-        frames.append(s)
-
+        frames.append(pd.to_numeric(df[col], errors="coerce"))
     series = pd.concat(frames, ignore_index=True).dropna().astype(int)
     return columns, series
 
 
-def build_frequency_table(series: pd.Series):
+def freq_table(series):
     counts = series.value_counts().sort_index()
-    return counts.rename("出现次数").reset_index().rename(columns={"index": "号码", "出现次数": "出现次数"})
+    df = counts.rename("出现次数").reset_index().rename(columns={"index": "号码", "出现次数": "出现次数"})
+    df["出现频率%"] = (df["出现次数"] / df["出现次数"].sum() * 100).round(2)
+    return df
 
 
-def get_recent_numbers(series: pd.Series, lookback: int = 30):
-    return series.tail(lookback).value_counts().sort_values(ascending=False)
+def recent_table(series, lookback=30):
+    recent = series.tail(lookback).value_counts().sort_values(ascending=False)
+    df = recent.rename("近期出现次数").reset_index().rename(columns={"index": "号码", "近期出现次数": "近期出现次数"})
+    df["号码"] = df["号码"].astype(int)
+    return df.head(20)
 
 
-def get_local_trend(series: pd.Series):
-    result = []
-    values = series.sort_values().tolist()
-    for i in range(len(values) - 1):
-        if values[i + 1] > values[i]:
-            result.append("上升")
-        elif values[i + 1] < values[i]:
-            result.append("下降")
-        else:
-            result.append("持平")
-    return result[:10]
+def build_recommend(freq_df, recent_df, series):
+    score = freq_df.copy()
+    score["号码"] = score["号码"].astype(int)
+    recent_map = dict(zip(recent_df["号码"].astype(int), recent_df["近期出现次数"]))
+    score["近期出现次数"] = score["号码"].map(recent_map).fillna(0).astype(int)
+    score["综合分"] = (score["出现次数"] * 1.0 + score["近期出现次数"] * 1.5).round(2)
+    score = score.sort_values(["综合分", "出现次数"], ascending=False)
+    score["说明"] = "热号/近期活跃"
+    score.loc[score["近期出现次数"] == 0, "说明"] = "偏冷号"
+    return score[["号码", "综合分", "出现次数", "近期出现次数", "说明"]].head(15)
 
 
-def build_ai_style_summary(freq_df: pd.DataFrame, recent_counts: pd.Series, series: pd.Series):
-    all_nums = list(range(1, int(series.max()) + 1))
-    seen = set(freq_df["号码"].tolist())
-    missed = [n for n in all_nums if n not in seen]
-
-    hot = freq_df.sort_values("出现次数", ascending=False).head(10)
-    cold = freq_df.sort_values("出现次数", ascending=True).head(10)
-    recent_top = recent_counts.head(10)
-
-    tips = []
-    if not hot.empty:
-        tips.append(f"热号集中区：{', '.join(map(str, hot['号码'].head(5).tolist()))}。近期趋势偏活跃。")
-    if not cold.empty:
-        tips.append(f"冷号观察区：{', '.join(map(str, cold['号码'].head(5).tolist()))}。近期出现频次较低。")
-    if missed:
-        tips.append(f"当前样本未出现号码：{', '.join(map(str, missed[:10]))}。可作为对照观察。")
-    if not recent_top.empty:
-        tips.append(f"近期重点关注号码：{', '.join(map(str, recent_top.index[:5].astype(int).tolist()))}。短期变化较明显。")
-
-    return {
-        "hot": hot,
-        "cold": cold,
-        "recent": recent_top,
-        "tips": tips,
-    }
-
-
-def generate_random_combo(count: int = 6, max_num: int = 49, total: int = 5):
-    combos = []
+def make_combo(count=6, max_num=49, total=5):
+    out = []
     for _ in range(total):
-        combo = sorted(random.sample(range(1, max_num + 1), count))
-        combos.append(combo)
-    return combos
-
+        out.append(sorted(random.sample(range(1, max_num + 1), count)))
+    return out
 
 with st.sidebar:
     st.header("数据源")
-    uploaded = st.file_uploader("上传 CSV 历史数据", type=["csv"], help="例如：date,n1,n2,n3,n4,n5,n6")
+    uploaded = st.file_uploader("上传 CSV 历史数据", type=["csv"]) 
     st.markdown("---")
-    st.header("分析设置")
-    sample_count = st.slider("随机组合数", min_value=1, max_value=10, value=5)
-    combo_size = st.slider("每组号码数量", min_value=3, max_value=10, value=6)
+    st.header("大屏设置")
+    combo_count = st.slider("随机组合数", 1, 10, 5)
+    combo_size = st.slider("每组号码数量", 3, 10, 6)
+    recent_window = st.slider("近期窗口", 10, 100, 30)
 
 if uploaded is not None:
     try:
         data = pd.read_csv(uploaded)
     except Exception as exc:
-        st.error(f"读取上传文件失败：{exc}")
+        st.error(f"读取上传数据失败：{exc}")
         st.stop()
 else:
-    data = pd.read_csv(DATA_FILE)
+    data = load_demo_data()
 
 try:
-    columns, numbers = normalize_draws(data)
+    cols, numbers = normalize(data)
 except Exception as exc:
     st.error(f"无法识别数据：{exc}")
     st.stop()
 
-freq_df = build_frequency_table(numbers)
-summary = build_ai_style_summary(freq_df, get_recent_numbers(numbers), numbers)
-trend = get_local_trend(numbers)
+freq_df = freq_table(numbers)
+recent_df = recent_table(numbers, lookback=recent_window)
+recommend_df = build_recommend(freq_df, recent_df, numbers)
 
+# 顶部指标
 st.subheader("数据总览")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("数据条数", len(data))
-col2.metric("号码列数", len(columns))
-col3.metric("出现号码总量", len(numbers))
-col4.metric("不同号码个数", freq_df.shape[0])
+col2.metric("号码列数", len(cols))
+col3.metric("号码总出现次数", len(numbers))
+col4.metric("不同号码数", freq_df.shape[0])
 
-st.subheader("历史数据")
-st.dataframe(data, use_container_width=True, hide_index=True)
+# 大屏图片板
+st.subheader("分析面板")
+main_left, main_right = st.columns([2, 1])
 
-st.subheader("号码频率分布")
-st.bar_chart(freq_df.set_index("号码")["出现次数"])
+with main_left:
+    st.markdown("### 热号分布")
+    st.bar_chart(freq_df.set_index("号码")["出现次数"])
 
+with main_right:
+    st.markdown("### 重点观察")
+    if not recommend_df.empty:
+        top5 = recommend_df.head(5)
+        for _, row in top5.iterrows():
+            st.info(f"号码 {int(row['号码'])}：综合分 {row['综合分']}，近期出现 {int(row['近期出现次数'])} 次")
+
+# 第二行：热冷
 hot, cold = st.columns(2)
 with hot:
     st.markdown("### 热号 Top 10")
-    st.dataframe(summary["hot"].head(10), use_container_width=True, hide_index=True)
+    st.dataframe(freq_df.sort_values("出现次数", ascending=False).head(10), use_container_width=True, hide_index=True)
 with cold:
     st.markdown("### 冷号 Top 10")
-    st.dataframe(summary["cold"].head(10), use_container_width=True, hide_index=True)
+    st.dataframe(freq_df.sort_values("出现次数", ascending=True).head(10), use_container_width=True, hide_index=True)
 
-st.subheader("近期走势（智能观察）")
-recent_df = pd.DataFrame({
-    "号码": summary["recent"].index.astype(int),
-    "近期出现次数": summary["recent"].values.astype(int),
-})
-st.dataframe(recent_df, use_container_width=True, hide_index=True)
+# 第三行：近期走势 + AI 建议
+recent_panel, ai_panel = st.columns([1.2, 1.2])
+with recent_panel:
+    st.markdown("### 近期走势")
+    st.dataframe(recent_df, use_container_width=True, hide_index=True)
+    st.bar_chart(recent_df.set_index("号码")["近期出现次数"])
 
-st.subheader("局部趋势观察")
-st.write(trend)
+with ai_panel:
+    st.markdown("### AI 风格分析建议")
+    top_numbers = recommend_df["号码"].head(5).tolist()
+    hot_numbers = freq_df.sort_values("出现次数", ascending=False).head(5)["号码"].tolist()
+    cold_numbers = freq_df.sort_values("出现次数", ascending=True).head(5)["号码"].tolist()
+    st.info(f"优先观察：{', '.join(map(str, top_numbers))}")
+    st.info(f"热号集中区：{', '.join(map(str, hot_numbers))}")
+    st.info(f"冷号观察区：{', '.join(map(str, cold_numbers))}")
+    st.dataframe(recommend_df, use_container_width=True, hide_index=True)
 
-st.subheader("AI 风格分析建议")
-for tip in summary["tips"]:
-    st.info(tip)
-
+# 随机组合
 st.subheader("随机组合生成")
 max_num = int(numbers.max()) if not numbers.empty else 49
-combinations = generate_random_combo(count=min(combo_size, 6), max_num=max_num, total=sample_count)
-for idx, combo in enumerate(combinations, 1):
-    st.write(f"组合 {idx}: {combo}")
+combos = make_combo(count=min(combo_size, 6), max_num=max_num, total=combo_count)
+for i, combo in enumerate(combos, 1):
+    st.write(f"组合 {i}: {combo}")
 
-st.caption("说明：该页面仅基于历史数据做统计分析与智能解读，不代表中奖概率或预测结果。")
+st.caption("说明：本大屏仅提供历史数据统计与智能展示，不保证中奖。")
