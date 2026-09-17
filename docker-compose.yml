@@ -1,7 +1,7 @@
 services:
-  enterprise-dashboard:
+  production-dashboard:
     build: ./app
-    container_name: enterprise-dashboard
+    container_name: production-dashboard
     ports:
       - "8501:8501"
     restart: unless-stopped
