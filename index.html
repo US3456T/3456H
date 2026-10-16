@@ -113,6 +113,21 @@
           </div>
           <div id="aiReport" class="ai-report">
             <p>请上传 CSV 或点击加载示例数据。</p>
+            <hr />
+            <div id="advancedControls">
+              <h4>高级彩票分析（纯前端）</h4>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label>候选号码数量：<input id="candidateSize" type="number" value="6" min="1" style="width:72px" /></label>
+                <label>生成候选数：<input id="candidateCount" type="number" value="10" min="1" style="width:72px" /></label>
+                <label>排除号码（逗号分隔）：<input id="excludeNumbers" type="text" placeholder="例如：3,7,12" /></label>
+                <label>和值范围（min-max）：<input id="sumRange" type="text" placeholder="例如：60-180" /></label>
+                <div style="display:flex;gap:8px;">
+                  <button id="genCandidatesBtn" class="btn btn-primary">生成候选组合</button>
+                  <button id="exportCandidatesBtn" class="btn btn-light">导出 CSV</button>
+                </div>
+              </div>
+              <div id="candidatesArea" style="margin-top:10px;font-size:0.9rem;color:var(--muted)"></div>
+            </div>
           </div>
         </aside>
       </main>
@@ -126,7 +141,7 @@
             <thead>
               <tr>
                 <th>日期</th>
-                <th>数值</th>
+                <th>数值 / 号码</th>
                 <th>增幅</th>
                 <th>状态</th>
               </tr>
